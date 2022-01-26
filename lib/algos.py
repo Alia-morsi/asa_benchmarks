@@ -4,9 +4,10 @@ import librosa, pretty_midi
 import lib.midi as midi
 import lib.util as util
 
-import pyximport
-pyximport.install(reload_support=True, language_level=sys.version_info[0],
-                  setup_args={"include_dirs":np.get_include()})
+#import pyximport
+#pyximport.install(reload_support=True, language_level=sys.version_info[0],
+#                  setup_args={"include_dirs":np.get_include()})
+
 import lib.gtalign as gtalign
 
 def align_ground_truth(score_midi, perf, fs=44100, stride=512, lmbda=0.1):

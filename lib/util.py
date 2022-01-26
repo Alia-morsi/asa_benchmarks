@@ -8,13 +8,13 @@ import numpy as np
 def map_score(perf):
     """ associate a performance midi with a kern score based on filename conventions """
     regex = re.compile('(\d\d\d)_bwv(\d\d\d)(f|p)')
-    info = regex.search(perf)
-    num, bwv, part = info.group(1,2,3)
-    bwv = int(bwv)
-    book = 1 + int(bwv > 869)
-    score = 'wtc{}{}{:02d}'.format(book,part,bwv - 845 - (book-1)*24)
+    #info = regex.search(perf)
+    #num, bwv, part = info.group(1,2,3)
+    #bwv = int(bwv)
+    #book = 1 + int(bwv > 869)
+    #score = 'wtc{}{}{:02d}'.format(book,part,bwv - 845 - (book-1)*24)
 
-    return score
+    return '{}_midi_score'.format(perf)
 
 def plot_events(ax, events, stride=512, num_windows=2000):
     timings = np.cumsum(events[:,-1])

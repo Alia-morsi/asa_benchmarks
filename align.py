@@ -43,10 +43,10 @@ if __name__ == "__main__":
         for perf in performances:
             print('  ', perf, end=' ')
             t0 = time.time()
-            perf_audio = os.path.join(perfdir, perf + '.wav')
+            perf_path = os.path.join(perfdir, perf)
             score = os.path.join(scoredir,util.map_score(perf) + '.midi')
 
-            alignment = alignment_algo(score, perf_audio)
+            alignment = alignment_algo(score, perf_path)
             np.savetxt(os.path.join(outdir, perf + '.txt'), alignment, fmt='%f\t', header='score\t\tperformance')
 
             t1 = time.time()-t0
