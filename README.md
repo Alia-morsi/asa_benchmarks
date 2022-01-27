@@ -49,7 +49,7 @@ column indicates time in the performance.
 To evaluate the results of a particular alignment algorithm:
 
 ```
-python3 eval.py {spectra,chroma,cqt} data/score data/perf
+python3 eval.py {spectra,chroma,cqt,ctc-chroma} data/score data/perf
 ```
 
 ## Visualizations 
@@ -84,3 +84,12 @@ To reference this work, please cite
   year      = {2020},
 }
 ```
+
+Note to Dev: 
+- if you are to add another dtw implementation, make sure that you transpose the audio representations to the format expected by the distance measure used. 
+- On the conversion from and to the actual times, 
+
+Todos: 
+- add the possibility to only align a subset of the performances in the data folder.
+
+
