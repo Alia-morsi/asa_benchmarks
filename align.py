@@ -14,7 +14,9 @@ algo_functions = {
     'ground' : 'align_ground_truth',
     'spectra' : 'align_spectra',
     'chroma' : 'align_chroma',
-    'cqt' : 'align_prettymidi'
+    'cqt' : 'align_prettymidi',
+    'ctc-chroma': 'align_ctc_chroma',
+    'f0-salience': 'align_salience'
 }
 
 if __name__ == "__main__":
@@ -40,6 +42,7 @@ if __name__ == "__main__":
         with multiprocessing.Pool(parallel) as p: p.starmap(align_and_save, args)
     else:
         print('Computing {} alignments'.format(algo))
+        total = 0 #tracker for the total time
         for perf in performances:
             print('  ', perf, end=' ')
             t0 = time.time()

@@ -3,6 +3,7 @@ import numpy as np
 import librosa, pretty_midi
 import lib.midi as midi
 import lib.util as util
+from lib.pitchclass_mctc.wrappers import PitchClassCTC
 
 #import pyximport
 #pyximport.install(reload_support=True, language_level=sys.version_info[0],
@@ -52,6 +53,22 @@ def align_spectra(score_midi, perf, fs=44100, stride=512, n_fft=4096):
     path = np.array(list(reversed(np.asarray(wp))))
 
     return np.array([(s,t) for s,t in dict(reversed(wp)).items()])*(stride/fs)
+
+def align_ctc_chroma(score_midi, perf, fs=44100, stride=512, n_fft=4096):
+    score_synth = pretty_midi.PrettyMIDI(score_midi).fluidsynth(fs=fs)
+    perf,_ = librosa.load(perf + '.wav', sr=fs)
+    pclass_extractor = PitchClassCTC()
+    perf_pclass = pclass_extractor(perf, fs)
+    score_synth_pclass = pclass_extractor(score_synth, fs)
+    
+    D, wp = librosa.sequence.dtw(X=score_synth_pclass, Y=perf_pclass)
+    path = np.array(list(reversed(np.asarray(wp))))
+
+    return np.array([(s,t) for s,t in dict(reversed(wp)).items()])*(stride/fs)
+    
+    
+def align_salience(score_midi, perf, fs=44100, stride=512, n_fft=4096):
+    return
 
 def align_prettymidi(score_midi, perf, fs=22050, hop=512, note_start=36, n_notes=48, penalty=None):
     '''
