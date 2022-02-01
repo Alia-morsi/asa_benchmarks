@@ -14,7 +14,7 @@ def map_score(perf):
     #book = 1 + int(bwv > 869)
     #score = 'wtc{}{}{:02d}'.format(book,part,bwv - 845 - (book-1)*24)
 
-    return '{}_midi_score'.format(perf)
+    return '{}'.format(perf)
 
 def plot_events(ax, events, stride=512, num_windows=2000):
     timings = np.cumsum(events[:,-1])

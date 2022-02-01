@@ -1,7 +1,9 @@
 #!/usr/bin/python3
 import os,sys,errno,csv,re
+import pandas as pd
 import lib.midi as midilib
 import lib.util as util
+import shutil
 
 from scipy.io import wavfile
 
@@ -53,6 +55,23 @@ def extract(basename, score_root, data, notes, ticks_per_beat):
     score = os.path.join(score_root, scorename + '.krn')
     target = 'data/score/{}'.format(scorename + '.midi')
     os.system('hum2mid {} -o {}'.format(score, target))
+    
+
+def restructure_asap_files(asap_root, metadata_path):
+    asap_metadata_df = pd.read_csv(os.path.join(asap_root, metadata_path))
+    #for now, just filter the bachs
+    bach_subset_df = asap_metadata_df[asap_metadata_df['composer'] == 'Bach']
+    
+    #this function should overwrite if exists also.
+    for index, row in bach_subset_df.iterrows():
+        basename = row['title']
+        
+        shutil.copy(os.path.join(asap_root, row['midi_score']), 'data/score/{}'.format(basename + '.midi'))
+        shutil.copy(os.path.join(asap_root, row['midi_score_annotations']), 'data/score/{}'.format(basename + '.txt'))
+                    
+        shutil.copy(os.path.join(asap_root, row['midi_performance']), 'data/perf/{}'.format(basename + '.midi'))
+        shutil.copy(os.path.join(asap_root, row['performance_annotations']), 'data/perf/{}'.format(basename + '.txt'))
+        
 
 
 if __name__ == "__main__":

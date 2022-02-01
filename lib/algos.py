@@ -3,13 +3,40 @@ import numpy as np
 import librosa, pretty_midi
 import lib.midi as midi
 import lib.util as util
+import pandas as pd
 from lib.pitchclass_mctc.wrappers import PitchClassCTC
+
 
 #import pyximport
 #pyximport.install(reload_support=True, language_level=sys.version_info[0],
 #                  setup_args={"include_dirs":np.get_include()})
 
 import lib.gtalign as gtalign
+
+def interpolate_ground_truth(score_midi, perf, score_beat_annotation='', perf_beat_annotation='', fs=44100, stride=512, lmbda=0.1):
+        # A good way to evaluate this interpolated ground truth is to see whether the interpolated onsets would
+    # compare them with the performance onsets. This will only be applicable with the ASAP scores that are
+    # asserted to have the same number of score notes and performance notes. Otherwise the same concept can be done but we'll have to think of a trick. This ground truth evaluation is already done at a later step so we won't repeat it in this function.
+
+    # build the interpolation function with x being the score time and y being the performance time
+    #generate the interpolation for all the necessary note onsets? 
+    
+    score_beat_annot_df =  pd.read_csv(score_beat_annotation, delimiter='\t', header=None)
+    perf_beat_annot_df =  pd.read_csv(perf_beat_annotation, delimiter='\t', header=None)
+        
+    score_notes, score_tpb = midi.load_midi(score_midi)
+    score_note_onsets = list(zip(*score_notes))[1]
+    
+    #The performance midi is only loaded to get the performance start time
+    perf_events,perf_start,perf_end = midi.load_midi_events(perf + '.midi')
+    
+    interpolated_performance = np.interp(score_note_onsets, score_beat_annot_df[0], perf_beat_annot_df[0])
+    interpolated_gt_annotation = np.array(list(zip(score_note_onsets, interpolated_performance)))
+    
+    
+
+    return np.insert(interpolated_gt_annotation, 0, (score_notes[0][1], perf_end), axis=0)
+    
 
 def align_ground_truth(score_midi, perf, fs=44100, stride=512, lmbda=0.1):
     score_events,score_start,score_end = midi.load_midi_events(score_midi)
