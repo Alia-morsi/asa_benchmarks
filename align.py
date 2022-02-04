@@ -36,7 +36,6 @@ if __name__ == "__main__":
 
     start_time = time.time()
     
-    
     performances = sorted([f[:-len('.midi')] for f in os.listdir(perfdir) if f.endswith('.midi')])
     
     if algo == 'ground-beat-interpol':
@@ -80,7 +79,7 @@ if __name__ == "__main__":
 
             t1 = time.time()-t0
             print('({} seconds)'.format(t1))
-        total += t1
+            total += t1
 
     print('Elapsed time: {} seconds'.format(time.time()-start_time))
 
