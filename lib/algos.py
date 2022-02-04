@@ -6,7 +6,6 @@ import lib.util as util
 import pandas as pd
 from lib.pitchclass_mctc.wrappers import PitchClassCTC
 
-
 #import pyximport
 #pyximport.install(reload_support=True, language_level=sys.version_info[0],
 #                  setup_args={"include_dirs":np.get_include()})
@@ -33,9 +32,9 @@ def interpolate_ground_truth(score_midi, perf, score_beat_annotation='', perf_be
     interpolated_performance = np.interp(score_note_onsets, score_beat_annot_df[0], perf_beat_annot_df[0])
     interpolated_gt_annotation = np.array(list(zip(score_note_onsets, interpolated_performance)))
     
-    
-
-    return np.insert(interpolated_gt_annotation, 0, (score_notes[0][1], perf_end), axis=0)
+    #not sure why we have this statement, but it could be for the interpolation success
+    return np.insert(interpolated_gt_annotation, 0, (score_notes[0][1], perf_start), axis=0)
+#    return np.insert(interpolated_gt_annotation, 0, (score_notes[0][1], perf_start), axis=0)
     
 
 def align_ground_truth(score_midi, perf, fs=44100, stride=512, lmbda=0.1):
