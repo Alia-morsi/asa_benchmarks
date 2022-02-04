@@ -52,6 +52,37 @@ To evaluate the results of a particular alignment algorithm:
 python3 eval.py {spectra,chroma,cqt,ctc-chroma} data/score data/perf
 ```
 
+## Interpolating Ground Truths from ASAP
+
+Although checking the reliability of such interpolated annotations is something still in the works, we have added the ability to both generate ground truth annotations and to sonify them + play them alongside the actual performance wav. 
+
+However, first the ASAP files need to be restructured a bit.
+
+```
+from extract import restructure_asap_files
+
+restructure_asap_files('/Users/aliamorsi/Desktop/phD/a2s_with_dtw_survey/pitchclass_mctc/data/asap-preludes', 'metadata.csv')
+```
+
+Then, run the following to create the ground truth interpolations
+
+```
+python3 align.py ground-beat-interpol data/score data/perf 0
+```
+
+To sonify them, run:
+
+```
+from extract import sonify_interpolated_gt
+
+sonify_interpolated_gt()
+```
+
+and by default, the sonified files will be created in eval/sonic.
+These files are stereo, with the sonified performance_aligned_gt on one channel and the performance wav on the other.
+
+Open them with audacity, split to have each channel on a separate track, and play with the volume so that they sound even. If playing them together does not seem odd, then there is no problem with the ground truth.
+
 ## Visualizations 
 
 To understand the behavior of the ground-truth alignments, we can visually compare the piano-roll
