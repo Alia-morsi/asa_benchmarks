@@ -69,6 +69,10 @@ def restructure_asap_files(asap_root, metadata_path):
     #this function should overwrite if exists also.
     for index, row in bach_subset_df.iterrows():
         basename = row['title']
+        performer = os.path.split(row['midi_performance'])[1]
+        
+        #modify name to avoid overlaps between performances of the same score
+        basename = 'asap-{}-{}'.format(basename, performer[:len('.mid')])
         
         shutil.copy(os.path.join(asap_root, row['midi_score']), 'data/score/{}'.format(basename + '.midi'))
         shutil.copy(os.path.join(asap_root, row['midi_score_annotations']), 'data/score/{}'.format(basename + '.txt'))
@@ -95,7 +99,9 @@ def sonify_interpolated_gt():
             continue
             
         stereo_sonification = util.sonic_gt_evaluation(os.path.join(interpolation_basepath, gt_alignment), perf_audio, perf_midi_file, score_midi_file)
-        
+        if not len(stereo_sonification):
+            print('Skipping {} \n'.format(outfile))
+            continue
         outfile = os.path.join('eval/sonic/', '{}'.format(gt_alignment[:-len('.txt')] + '.wav'))
         print('Writing {} \n'.format(outfile))
         sf.write(outfile, stereo_sonification.T, 44100)
