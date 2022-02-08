@@ -4,7 +4,7 @@ import numpy as np
 import lib.util as util
 import lib.midi as midi
 
-import music21
+import music21 as m21
 
 import pandas as pd
 
@@ -39,51 +39,44 @@ def filter_performances():
 
 #Thresholds and colors must be parallel with length greater than 1
 #Thresholds must be sorted.
-def color_chooser(error_val, colors = [], thresholds = []):
+def color_chooser(error_val, thresholds = [], colors = []):
     for i in range(1, len(thresholds)):
         if error_val > thresholds[i-1] and error_val < thresholds[i]:
+            return colors[i-1]
+        elif error_val < thresholds[i-1]:
             return colors[i-1]
     return colors[-1]   
             
 
 #expects 4 thresholds.
-def prepare_eval_score(scoredir, evaldir, color_thresholds=color_chooser):
+def prepare_eval_score(scoredir, evaldir, thresholds, colors, color_thresholds=color_chooser):
     # using the results of evaluation, returns the musicxml (or midi) score with color annotations in parts with bad accuracy. 
     #for now, only midi will be used for ease.
 
     for file in sorted([f[:-len('.midi')] for f in os.listdir(scoredir) if f.endswith('.midi')]):
-        m21_score = m21.converter.parse('{}.midi'.format(file))
+        m21_score = m21.converter.parse(os.path.join(scoredir, '{}.midi'.format(file)))
         errors = np.loadtxt(os.path.join(evaldir, file + '.txt'))
         
         for element in m21_score.flat.getElementsByClass([m21.note.Note, m21.chord.Chord]).secondsMap:
-            error_window = util.binary_search(element['offsetSeconds'], errors[:, 0], 0, len(errors[:, 0]))
-            element['element'].style.color = color_chooser(errors[error_window] * 1000)
-        
-        
+            error_window = np.searchsorted(errors[:, 0], element['offsetSeconds'])
+            if error_window >= len(errors):
+                continue
+            element['element'].style.color = color_chooser(abs(errors[error_window][1]), thresholds, colors)
             
-            
-            
-            
-            
-            
-            
-        
-        
-    
-    # iterate over the beatmap things (so it's not instrument by instrument)
-        # get timing of the note
-        # accordingly, look up the error corresponding to this time in the score
-        # add an attribute (?) in the musicxml score according to the error.
+        m21_score.write('musicxml', os.path.join(evaldir, '{}.xml'.format(file)))
     return
+  
 
 def calculate_summary_metrics(error_alignment):
-    #'misalignment_rate_50ms', 'misalignment_rate_250ms' 'variance_misaligned_50ms', 'variance_misaligned_250ms', '1stquartile', 'median', '3rdquartile', 'average_absolute_offset']
     
     #misalignment rate calculations
     misaligned_50ms = error_alignment[error_alignment[:, 1] > 0.050][:, 1]
     misaligned_250ms = error_alignment[error_alignment[:, 1] > 0.250][:, 1]
+    
+    misalignment_rate_50ms = len(misaligned_50ms) * 100 / len(error_alignment)
+    misalignment_rate_250ms = len(misaligned_250ms) * 100 / len(error_alignment)
    
-    return misaligned_50ms.mean(), misaligned_250ms.mean(), misaligned_50ms.var(), misaligned_250ms.var(), np.percentile(error_alignment[:, 1], 25), np.percentile(error_alignment[:, 1], 50), np.percentile(error_alignment[:, 1], 75), abs(error_alignment[:, 1]).mean()
+    return misalignment_rate_50ms, misalignment_rate_250ms, misaligned_50ms.mean(), misaligned_250ms.mean(), misaligned_50ms.var(), misaligned_250ms.var(), np.percentile(error_alignment[:, 1], 25), np.percentile(error_alignment[:, 1], 50), np.percentile(error_alignment[:, 1], 75), abs(error_alignment[:, 1]).mean()
 
 # we should pass in the interpolated ground truths. 
 # calculates all the metrics for a particular alignment algorithm
@@ -95,7 +88,7 @@ def calculate_bulk_metrics(candidatedir, gtdir, scoredir, perfdir):
     os.makedirs(metrics_basepath, exist_ok=True)
     
     summary_file = 'eval/{}/{}'.format(algo, 'metric_summary.csv')
-    df_columns = ['file_id','misalignment_rate_50ms', 'misalignment_rate_250ms', 'variance_misaligned_50ms', 'variance_misaligned_250ms', '1stquartile', 'median', '3rdquartile', 'average_absolute_offset']
+    df_columns = ['file_id', 'misalignment_rate_50ms', 'misalignment_rate_250ms', 'misalignment_mean_50ms', 'misalignment_mean_250ms', 'variance_misaligned_50ms', 'variance_misaligned_250ms', '1stquartile', 'median', '3rdquartile', 'average_absolute_offset']
     summary = []
     
     for file in sorted([f[:-len('.midi')] for f in os.listdir(perfdir) if f.endswith('.midi')]):
