@@ -52,6 +52,14 @@ To evaluate the results of a particular alignment algorithm:
 python3 eval.py {spectra,chroma,cqt,ctc-chroma} data/score data/perf
 ```
 
+To generate result files from the alignment process, run
+
+```
+from eval import calculate_bulk_metrics
+
+calculate_bulk_metrics('align/chroma/', 'align/ground-beat-interpol', 'data/score', 'data/perf')
+```
+
 ## Interpolating Ground Truths from ASAP
 
 Although checking the reliability of such interpolated annotations is something still in the works, we have added the ability to both generate ground truth annotations and to sonify them + play them alongside the actual performance wav. 
