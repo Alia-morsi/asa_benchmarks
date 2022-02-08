@@ -7,6 +7,10 @@ import lib.algos as algos
 def align_and_save(align, perf, perfdir, score_dir, outdir, kwargs={}):
     perf_transcript = os.path.join(perfdir, perf)
     score = os.path.join(scoredir,util.map_score(perf) + '.midi')
+    
+    if os.path.isfile(os.path.join(outdir, perf + '.txt')):
+        return #to avoid repeating the alignment
+    
     alignment = align(score, perf_transcript, *kwargs)
     np.savetxt(os.path.join(outdir, perf + '.txt'), alignment, fmt='%f\t', header='score\t\tperformance')
 
@@ -74,6 +78,9 @@ if __name__ == "__main__":
                 kwargs['perf_beat_annotation'] = os.path.join(perfdir, util.map_score(perf) + '.txt') 
             #I think this shouldn't cause a problem because so far the base for the performances is the same as that of the files.
 
+            if os.path.isfile(os.path.join(outdir, perf + '.txt')):
+                continue
+                
             alignment = alignment_algo(score, perf_path, **kwargs)
             np.savetxt(os.path.join(outdir, perf + '.txt'), alignment, fmt='%f\t', header='score\t\tperformance')
 
