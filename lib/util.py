@@ -17,6 +17,7 @@ sys.path.append('..')
 
 import lib.midi as midi
 import pretty_midi
+import math
 
 import pdb
 
@@ -59,7 +60,6 @@ def pianoroll(events, fs=44100, stride=512):
         x[i] = notes[np.argmin(t>timing)]
         
     return x
-
         
 def pscore(score, alignment, stride=512, start=False):
     epsilon = 1e-4
@@ -108,27 +108,28 @@ def sonic_gt_evaluation(gt_alignment, perf_audio, perf_midi_file, score_midi_fil
       
     ground_prettymidi = midi_gt_performance(gt_alignment, score_midi_file)
 
+    start_index = math.ceil(perf_start*44100.0)
+    end_index = math.ceil(perf_end*44100.0)
+    
     #sonify groundroll with fluidsynth and pretty_midi
-    sonified_gt = ground_prettymidi.fluidsynth()
+    sonified_gt = ground_prettymidi.fluidsynth()[start_index:end_index]
     
     #truncate based on the known interpolation bounds, which are the perf start and end
-    sonified_gt = sonified_gt[int(perf_start*44100):int(perf_end*44100)]
-    
     #truncate it according to where the performance should start, since the gt is basically the score mapped to the performance
     #sonified_gt = sonified_gt[int(perf_start*44100):]
     
     #truncate performance to remove any trailing or leading silences
-    truncated_performance = performance_audio[0][int(perf_start*44100):int(perf_end*44100)]
+    truncated_performance = performance_audio[0][start_index:end_index]
     
-    #should they start the same or end the same?
-    #I believe we are more certain about the end.. so let's pad the shorter one to match the longer one, assuming that they should end the same.
+    stereo_sonification = []
     
-    #padded_performance = np.zeros(len(sonified_gt))
+    if len(truncated_performance) == len(sonified_gt): 
+        stereo_sonification = np.stack([sonified_gt, truncated_performance], axis=0)
+        stereo_sonification = librosa.util.normalize(stereo_sonification, axis=1)
+        
+    #padded_gt = np.zeros(len())
     #begin = abs(len(truncated_performance) - len(sonified_gt))
     #padded_performance[begin:] = truncated_performance
     
-    stereo_sonification = np.stack([sonified_gt, truncated_performance], axis=0)
-    
-    stereo_sonification = librosa.util.normalize(stereo_sonification, axis=1)
-    
     return stereo_sonification
+
