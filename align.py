@@ -21,7 +21,10 @@ algo_functions = {
     'chroma' : 'align_chroma',
     'cqt' : 'align_prettymidi',
     'ctc-chroma': 'align_ctc_chroma',
-    'f0-salience': 'align_salience'
+    'f0-salience': 'align_salience', 
+    'hpcpgram': 'align_hpcp', 
+    'nnls': 'align_nnls',
+    'dce': 'align_dce'
 }
 
 if __name__ == "__main__":

@@ -5,6 +5,14 @@ import lib.midi as midi
 import lib.util as util
 import pandas as pd
 from lib.pitchclass_mctc.wrappers import PitchClassCTC
+import vamp
+import madmom
+import soundfile as sf
+
+from essentia.standard import HPCP
+from essentia.pytools.spectral import hpcpgram
+
+import pdb
 
 #import pyximport
 #pyximport.install(reload_support=True, language_level=sys.version_info[0],
@@ -68,6 +76,7 @@ def align_chroma(score_midi, perf, fs=44100, stride=512, n_fft=4096):
 
     return np.array([(s,t) for s,t in dict(reversed(wp)).items()])*(stride/fs)
 
+
 def align_spectra(score_midi, perf, fs=44100, stride=512, n_fft=4096):
     score_synth = pretty_midi.PrettyMIDI(score_midi).fluidsynth(fs=fs)
     perf,_ = librosa.load(perf + '.wav', sr=fs)
@@ -80,17 +89,65 @@ def align_spectra(score_midi, perf, fs=44100, stride=512, n_fft=4096):
 
     return np.array([(s,t) for s,t in dict(reversed(wp)).items()])*(stride/fs)
 
+
+def align_hpcp(score_midi, perf, fs=44100, stride=2048, n_fft=4096):
+    score_synth = pretty_midi.PrettyMIDI(score_midi).fluidsynth(fs=fs)
+    perf,_ = librosa.load(perf + '.wav', sr=fs)
+    score_hpcpgram = hpcpgram(score_synth, sampleRate=fs, hopSize=2048, frameSize=4096)
+    perf_hpcpgram = hpcpgram(perf, sampleRate=fs)
+    
+    #why do they use this power_to_db?
+    D, wp = librosa.sequence.dtw(X=score_hpcpgram.T, Y=perf_hpcpgram.T)
+    path = np.array(list(reversed(np.asarray(wp))))
+    
+    return np.array([(s,t) for s,t in dict(reversed(wp)).items()])*(stride/fs)
+
+def align_dce(score_midi, perf, fs=44100, stride=512, n_fft=4096):
+    score_synth = madmom.audio.signal.Signal(pretty_midi.PrettyMIDI(score_midi).fluidsynth(fs=fs), sample_rate=fs)                 
+    perf = madmom.audio.signal.Signal(perf + '.wav', sample_rate=fs)                           
+    
+    #sf.write('tmp.wav', score_synth, fs)
+    dcp = madmom.audio.chroma.DeepChromaProcessor()
+    
+    score_chroma = dcp(score_synth)
+    perf_chroma = dcp(perf)                                 
+    
+    D, wp = librosa.sequence.dtw(X=score_chroma.T, Y=perf_chroma.T)
+    path = np.array(list(reversed(np.asarray(wp))))
+    
+    return np.array([(s, t) for s,t in dict(reversed(wp)).items()]) * 4410/44100
+    
+
+def align_nnls(score_midi, perf, fs=44100, stride=2048, n_ffg=4096):
+    score_synth = pretty_midi.PrettyMIDI(score_midi).fluidsynth(fs=fs)
+    perf,_ = librosa.load(perf + '.wav', sr=fs)
+    
+    score_chroma = vamp.collect(score_synth, fs, "nnls-chroma:nnls-chroma", step_size=2045, block_size=4096, output="chroma")['matrix'][1]
+    perf_chroma = vamp.collect(perf, fs, "nnls-chroma:nnls-chroma", step_size=2048, block_size=4096, output="chroma")['matrix'][1]
+    
+    D, wp = librosa.sequence.dtw(X=score_chroma.T, Y=perf_chroma.T)
+    path = np.array(list(reversed(np.asarray(wp))))
+    #I might need to stack the output, if it returns separate thiings for trebble and bass
+    
+    return np.array([(s,t) for s,t in dict(reversed(wp)).items()])*(2048/44100)
+
+
 def align_ctc_chroma(score_midi, perf, fs=44100, stride=512, n_fft=4096):
     score_synth = pretty_midi.PrettyMIDI(score_midi).fluidsynth(fs=fs)
     perf,_ = librosa.load(perf + '.wav', sr=fs)
     pclass_extractor = PitchClassCTC()
-    perf_pclass = pclass_extractor(perf, fs)
-    score_synth_pclass = pclass_extractor(score_synth, fs)
+    perf_hopsize_cqt, perf_fs, perf_pclass = pclass_extractor(perf, fs)
+    score_hopsize_cqt, score_fs, score_synth_pclass = pclass_extractor(score_synth, fs)
+    
+    #if by default they aren't the same sampling rate and hop size, then some manual intervention needs to be done.
+    if perf_hopsize_cqt != score_hopsize_cqt or score_fs != perf_fs:
+        print('mismatch!')
+        return []
     
     D, wp = librosa.sequence.dtw(X=score_synth_pclass, Y=perf_pclass)
     path = np.array(list(reversed(np.asarray(wp))))
 
-    return np.array([(s,t) for s,t in dict(reversed(wp)).items()])*(stride/fs)
+    return np.array([(s,t) for s,t in dict(reversed(wp)).items()])*(perf_hopsize_cqt/perf_fs)
     
     
 def align_salience(score_midi, perf, fs=44100, stride=512, n_fft=4096):

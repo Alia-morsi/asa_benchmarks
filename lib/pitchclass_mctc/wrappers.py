@@ -111,7 +111,7 @@ class PitchClassCTC:
             predictions = np.exp(pred_tot)
             
         #we do this transposition so that it fits with the expected input of librosa.dtw
-        return predictions.transpose([1, 0])
+        return hopsize_cqt, fs_in, predictions.transpose([1, 0])
         
     
     

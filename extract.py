@@ -107,6 +107,7 @@ def sonify_interpolated_gt():
         sf.write(outfile, stereo_sonification.T, 44100)
     return
 
+
 if __name__ == "__main__":
     os.makedirs('data/perf',exist_ok=True)
     os.makedirs('data/score',exist_ok=True)

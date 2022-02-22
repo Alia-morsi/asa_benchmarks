@@ -70,13 +70,13 @@ def prepare_eval_score(scoredir, evaldir, thresholds, colors, color_thresholds=c
 def calculate_summary_metrics(error_alignment):
     
     #misalignment rate calculations
-    misaligned_50ms = error_alignment[error_alignment[:, 1] > 0.050][:, 1]
-    misaligned_250ms = error_alignment[error_alignment[:, 1] > 0.250][:, 1]
+    misaligned_50ms = error_alignment[abs(error_alignment)[:, 1] > 0.050][:, 1]
+    misaligned_250ms = error_alignment[abs(error_alignment)[:, 1] > 0.250][:, 1]
     
     misalignment_rate_50ms = len(misaligned_50ms) * 100 / len(error_alignment)
     misalignment_rate_250ms = len(misaligned_250ms) * 100 / len(error_alignment)
    
-    return misalignment_rate_50ms, misalignment_rate_250ms, misaligned_50ms.mean(), misaligned_250ms.mean(), misaligned_50ms.var(), misaligned_250ms.var(), np.percentile(error_alignment[:, 1], 25), np.percentile(error_alignment[:, 1], 50), np.percentile(error_alignment[:, 1], 75), abs(error_alignment[:, 1]).mean()
+    return misalignment_rate_50ms, misalignment_rate_250ms, abs(misaligned_50ms).mean(), abs(misaligned_250ms).mean(), misaligned_50ms.var(), misaligned_250ms.var(), np.percentile(abs(error_alignment[:, 1]), 25), np.percentile(abs(error_alignment[:, 1]), 50), np.percentile(abs(error_alignment[:, 1]), 75), abs(error_alignment[:, 1]).mean()
 
 # we should pass in the interpolated ground truths. 
 # calculates all the metrics for a particular alignment algorithm
@@ -88,8 +88,14 @@ def calculate_bulk_metrics(candidatedir, gtdir, scoredir, perfdir):
     os.makedirs(metrics_basepath, exist_ok=True)
     
     summary_file = 'eval/{}/{}'.format(algo, 'metric_summary.csv')
+    threshold_file = 'eval/{}/{}'.format(algo, 'threshold_summary.csv')
+    
     df_columns = ['file_id', 'misalignment_rate_50ms', 'misalignment_rate_250ms', 'misalignment_mean_50ms', 'misalignment_mean_250ms', 'variance_misaligned_50ms', 'variance_misaligned_250ms', '1stquartile', 'median', '3rdquartile', 'average_absolute_offset']
     summary = []
+    
+    thresholds = list(range(0, 1010, 10))
+    aligned_notes = np.zeros(len(thresholds))
+    total_notes = np.zeros(len(thresholds))
     
     for file in sorted([f[:-len('.midi')] for f in os.listdir(perfdir) if f.endswith('.midi')]):
         gt_alignment = np.loadtxt(os.path.join(gtdir, file + '.txt'))
@@ -111,17 +117,32 @@ def calculate_bulk_metrics(candidatedir, gtdir, scoredir, perfdir):
         #time error
         error = list(gt_alignment[0:,1] - ch_alignment[0:,1])
         
+        #calculate AR at different thresholds:
+        for i in range(0, len(thresholds)):
+            t = thresholds[i]/1000.0
+            aligned_notes[i] += len([i for i in error if abs(i) < t])
+            total_notes[i] += len(error)
+            
+        
         zipped_error = np.array(list(zip(ch_alignment[:, 0], error)))
         np.savetxt(os.path.join(metrics_basepath, file + '.txt'), zipped_error, fmt='%f\t', header='score\t\tperformance')
         
         #from the error, also you can set error thresholds (50ms, 250ms, etc), and calculate the percentages
-        misalignment_rate_50ms, misalignment_rate_250ms, variance_misaligned_50ms, variance_misaligned_250ms, quartile_1st, median, quartile_3rd, absolute_mean_error = calculate_summary_metrics(zipped_error)
+        misalignment_rate_50ms, misalignment_rate_250ms, misalignment_50ms_mean, misalignment_250ms_mean, variance_misaligned_50ms, variance_misaligned_250ms, quartile_1st, median, quartile_3rd, absolute_mean_error = calculate_summary_metrics(zipped_error)
         
-        new_row = [file, misalignment_rate_50ms, misalignment_rate_250ms, variance_misaligned_50ms, variance_misaligned_250ms, quartile_1st, median, quartile_3rd, absolute_mean_error] 
+        new_row = [file, misalignment_rate_50ms, misalignment_rate_250ms, misalignment_50ms_mean, misalignment_250ms_mean, variance_misaligned_50ms, variance_misaligned_250ms, quartile_1st, median, quartile_3rd, absolute_mean_error] 
         summary.append(new_row)
             
-    summary_pd = pd.DataFrame(summary, columns = df_columns)
-    summary_pd.to_csv(summary_file, index=False)
+    summary_df = pd.DataFrame(summary, columns = df_columns)
+    summary_df.to_csv(summary_file, index=False)
+    
+    #alignment rate per each threshold
+    alignment_rate = (aligned_notes/total_notes) * 100
+    
+    #Alignment Rate by Threshold
+    ar_df = pd.DataFrame(np.stack([thresholds, alignment_rate], axis=1), columns=['threshold', 'alignment_rate'])
+    ar_df['algo'] = [algo] * len(thresholds)
+    ar_df.to_csv(threshold_file, index=False)
     
     return
 
@@ -194,6 +215,72 @@ def evaluate(candidatedir, gtdir, scoredir, perfdir):
     print('=' * 100)
     print('{}\t{:.4f}\t{:.4f}\t{:.4f}\t{:.4f}\t{:.4f}'.format('bottomline', np.mean(mad), np.mean(rmse), np.mean(old_mad), np.mean(old_rmse), np.mean(missedpct)))
     print('(removed {} outliers)'.format(outliers))
+    
+    return
+
+
+def get_score_performance_dfdt(gt_annotation_file):
+    gt_alignment = np.loadtxt(gt_annotation_file)
+    #not sure how many times it will crash due to zeroes.
+    derivatives = [abs(y2-y1)/abs(x2-x1) for x1, y1, x2, y2 in zip(example[:-1, 0], example[1:, 0], example[:-1, 1], example[1:, 1])]
+    return np.average(derivatives)
+
+
+def metadata_for_qa(scoredir, perfdir, gtdir):
+    #it might also be useful to search through which
+    #alignment_dirs = [os.path.join(align_base, algo) for algo in algos]
+    #evaluation_dirs = [os.path.join(eval_base, algo) for algo in algos]
+    
+    gt_files = sorted([f for f in os.listdir(gtdir) if f.endswith('.txt')])
+    #to get the base filename, all we have to do is gt_alignment[:-len('.txt')]
+
+    #large time offset between score and midi
+    score_performance_dfdt = [] #this can later be replaced by avg of derivative but for now fakes.
+    score_performance_d2fdt2 = [] #fakes for now
+    for gt_file in gt_files:
+        gt_annotation = np.loadtxt(os.path.join(gtdir, gt_file))
+        score_performance_dfdt.append(abs(gt_annotation[-1, 1] - gt_annotation[0, 1])/
+                                     abs(gt_annotation[-1, 0] - gt_annotation[-1, 1]))
+        
+    files = [file[:-len('.txt')] for file in gt_files]
+    extra_metadata_df = pd.DataFrame(np.stack([files, score_performance_dfdt], axis=1), columns = ['file_id', 'score_performance_dfdt'])
+    
+    score_bpm = []
+    performance_bpm = []
+    for file in files:
+        score_m21 = m21.converter.parse(os.path.join(scoredir, '{}.midi'.format(file)))
+        performance_m21 = m21.converter.parse(os.path.join(perfdir, '{}.midi'.format(file)))
+        
+        score_tempo = list(score_m21.flat.getElementsByClass(m21.tempo.MetronomeMark))
+        performance_tempo = list(performance_m21.flat.getElementsByClass(m21.tempo.MetronomeMark))
+        
+        #See if there is another way to get this info from mido directly without m21, because
+        # it seems that they all just get the default bpm, and then the comparison makes no sense.
+        score_bpm.append(score_tempo[0].number if len(score_tempo)>0 else -1)
+        performance_bpm.append(performance_tempo[0].number if len(performance_tempo)>0 else -1)
+        
+    extra_metadata_df['score_bpm'] = score_bpm
+    extra_metadata_df['performance_bpm'] = performance_bpm
+    
+    extra_metadata_df.to_csv('extra_metadata.csv', index=False)
+
+    return
+
+def metadata_for_visualization(candidatedir, gtdir, scoredir, perfdir):
+    # list all the files in candidate dir
+    
+    for file in files:
+        # load gt
+        # load midi score
+        # load score annotation
+        # load midi performance
+        # load performance annotation
+        print('test')
+        
+        # variance of the time rate of gt: load gt, interpolate based on columns, get the mean of the second derivative. https://docs.scipy.org/doc/scipy-0.15.1/reference/generated/scipy.interpolate.UnivariateSpline.derivative.html#scipy.interpolate.UnivariateSpline.derivative
+        # 
+    
+    return
    
 
 if __name__ == "__main__":
