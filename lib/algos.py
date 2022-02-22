@@ -18,7 +18,7 @@ import pdb
 #pyximport.install(reload_support=True, language_level=sys.version_info[0],
 #                  setup_args={"include_dirs":np.get_include()})
 
-import lib.gtalign as gtalign
+#import lib.gtalign as gtalign
 
 def interpolate_ground_truth(score_midi, perf, score_beat_annotation='', perf_beat_annotation='', fs=44100, stride=512, lmbda=0.1):
         # A good way to evaluate this interpolated ground truth is to see whether the interpolated onsets would
