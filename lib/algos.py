@@ -30,6 +30,9 @@ def interpolate_ground_truth(score_midi, perf, score_beat_annotation='', perf_be
     
     score_beat_annot_df =  pd.read_csv(score_beat_annotation, delimiter='\t', header=None)
     perf_beat_annot_df =  pd.read_csv(perf_beat_annotation, delimiter='\t', header=None)
+    
+    if len(score_beat_annot_df) != len(perf_beat_annot_df):
+        return []
         
     score_notes, score_tpb = midi.load_midi(score_midi)
     score_note_onsets = list(zip(*score_notes))[1]
