@@ -61,13 +61,15 @@ def extract(basename, score_root, data, notes, ticks_per_beat):
 def restructure_asap_files(asap_root, metadata_path):
     asap_metadata_df = pd.read_csv(os.path.join(asap_root, metadata_path))
     #for now, just filter the bachs
-    bach_subset_df = asap_metadata_df[asap_metadata_df['composer'] == 'Bach']
+    #bach_subset_df = asap_metadata_df[asap_metadata_df['composer'] == 'Bach']
     
     #delete any rows that have audio_performance set to nan
-    bach_subset_df = bach_subset_df[bach_subset_df['audio_performance'].notnull()]
+    #bach_subset_df = bach_subset_df[bach_subset_df['audio_performance'].notnull()]
+    asap_metadata_df = asap_metadata_df[asap_metadata_df['audio_performance'].notnull()]
     
     #this function should overwrite if exists also.
-    for index, row in bach_subset_df.iterrows():
+    #for index, row in bach_subset_df.iterrows():
+    for index, row in asap_metadata_df.iterrows():
         basename = row['title']
         performer = os.path.split(row['midi_performance'])[1]
         
