@@ -85,6 +85,10 @@ if __name__ == "__main__":
                 continue
                 
             alignment = alignment_algo(score, perf_path, **kwargs)
+            
+            if len(alignment) == 0:
+                continue
+                
             np.savetxt(os.path.join(outdir, perf + '.txt'), alignment, fmt='%f\t', header='score\t\tperformance')
 
             t1 = time.time()-t0
