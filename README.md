@@ -57,7 +57,15 @@ To generate result files from the alignment process, run
 ```
 from eval import calculate_bulk_metrics
 
-calculate_bulk_metrics('align/chroma/', 'align/ground-beat-interpol', 'data/score', 'data/perf')
+calculate_bulk_metrics('align/ctc-chroma/', 'align/ground-beat-interpol', 'data/score', 'data/perf')
+```
+
+To create the extra metadata which we will use to filter things later
+
+```
+from eval import metadata_for_qa
+
+metadata_for_qa('data/score', 'data/perf', 'align/ground-beat-interpol')
 ```
 
 ## Interpolating Ground Truths from ASAP
