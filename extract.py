@@ -101,10 +101,12 @@ def sonify_interpolated_gt():
             continue
             
         stereo_sonification = util.sonic_gt_evaluation(os.path.join(interpolation_basepath, gt_alignment), perf_audio, perf_midi_file, score_midi_file)
+        outfile = os.path.join('eval/sonic/', '{}'.format(gt_alignment[:-len('.txt')] + '.wav'))
+        
         if not len(stereo_sonification):
             print('Skipping {} \n'.format(outfile))
             continue
-        outfile = os.path.join('eval/sonic/', '{}'.format(gt_alignment[:-len('.txt')] + '.wav'))
+        
         print('Writing {} \n'.format(outfile))
         sf.write(outfile, stereo_sonification.T, 44100)
     return

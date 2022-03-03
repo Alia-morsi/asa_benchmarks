@@ -85,11 +85,14 @@ def pscore(score, alignment, stride=512, start=False):
 def midi_gt_performance(gt_alignment, score_midi_file):
     gt_seconds_map = np.loadtxt(gt_alignment)
     score2perf = interp1d(gt_seconds_map[:, 0], gt_seconds_map[:, 1])
+    score_bounds = (gt_seconds_map[0, 0], gt_seconds_map[-1, 0])
     
     pm = pretty_midi.PrettyMIDI(score_midi_file)
     
     for instrument in pm.instruments:
         for note in instrument.notes:
+            if note.start < score_bounds[0] or note.start > score_bounds[1]:
+                continue
             note_dur = note.end - note.start
             note.start = score2perf(note.start)
             note.end = note.start + note_dur
