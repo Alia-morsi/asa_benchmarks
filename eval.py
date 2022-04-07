@@ -46,13 +46,28 @@ def color_chooser(error_val, thresholds = [], colors = []):
         elif error_val < thresholds[i-1]:
             return colors[i-1]
     return colors[-1]   
-            
+
+def color_chooser2(error_val, upper_bound):
+    import matplotlib.cm as cmx
+    import matplotlib.colors as colors
+    import matplotlib.pyplot as plt
+
+    cmap = plt.get_cmap('magma')
+    cNorm  = colors.Normalize(vmin=0, vmax=upper_bound)
+    scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=cmap)
+
+    rgba_color = scalarMap.to_rgba(error_val*1000)
+    rgb_color = (rgba_color[0], rgba_color[1], rgba_color[2])
+    
+    return m21.graph.utilities.getColor(rgb_color)
+    
 
 #expects 4 thresholds.
-def prepare_eval_score(scoredir, evaldir, thresholds, colors, color_thresholds=color_chooser):
+#def prepare_eval_score(scoredir, evaldir, thresholds, colors, color_thresholds=color_chooser):
     # using the results of evaluation, returns the musicxml (or midi) score with color annotations in parts with bad accuracy. 
     #for now, only midi will be used for ease.
 
+def prepare_eval_score(scoredir, evaldir, error_upper_bound, color_thresholds=color_chooser2):
     for file in sorted([f[:-len('.midi')] for f in os.listdir(scoredir) if f.endswith('.midi')]):
         m21_score = m21.converter.parse(os.path.join(scoredir, '{}.midi'.format(file)))
         errors = np.loadtxt(os.path.join(evaldir, file + '.txt'))
@@ -61,7 +76,8 @@ def prepare_eval_score(scoredir, evaldir, thresholds, colors, color_thresholds=c
             error_window = np.searchsorted(errors[:, 0], element['offsetSeconds'])
             if error_window >= len(errors):
                 continue
-            element['element'].style.color = color_chooser(abs(errors[error_window][1]), thresholds, colors)
+            #element['element'].style.color = color_chooser(abs(errors[error_window][1]), thresholds, colors)
+            element['element'].style.color = color_chooser2(abs(errors[error_window][1]), error_upper_bound)
             
         m21_score.write('musicxml', os.path.join(evaldir, '{}.xml'.format(file)))
     return
@@ -88,7 +104,8 @@ def calculate_bulk_metrics(candidatedir, gtdir, scoredir, perfdir):
     os.makedirs(metrics_basepath, exist_ok=True)
     
     summary_file = 'eval/{}/{}'.format(algo, 'metric_summary.csv')
-    threshold_file = 'eval/{}/{}'.format(algo, 'threshold_summary.csv')
+    global_threshold_file = 'eval/{}/{}'.format(algo, 'threshold_summary.csv')
+    local_threshold_file = 'eval/{}/{}'.format(algo, 'local_thresholds.csv')
     
     df_columns = ['file_id', 'misalignment_rate_50ms', 'misalignment_rate_250ms', 'misalignment_mean_50ms', 'misalignment_mean_250ms', 'variance_misaligned_50ms', 'variance_misaligned_250ms', '1stquartile', 'median', '3rdquartile', 'average_absolute_offset']
     summary = []
@@ -96,6 +113,8 @@ def calculate_bulk_metrics(candidatedir, gtdir, scoredir, perfdir):
     thresholds = list(range(0, 1010, 10))
     aligned_notes = np.zeros(len(thresholds))
     total_notes = np.zeros(len(thresholds))
+    
+    ar_local_df = pd.DataFrame(columns=['alignment_rate', 'threshold', 'file'])
     
     for file in sorted([f[:-len('.midi')] for f in os.listdir(perfdir) if f.endswith('.midi')]):
         gt_alignment = np.loadtxt(os.path.join(gtdir, file + '.txt'))
@@ -117,13 +136,23 @@ def calculate_bulk_metrics(candidatedir, gtdir, scoredir, perfdir):
         #time error
         error = list(gt_alignment[0:,1] - ch_alignment[0:,1])
         
-        #calculate AR at different thresholds:
+        file_ar = np.zeros(len(thresholds)) 
+        # used to save the ar at each threshold for a single file
+
+        
         for i in range(0, len(thresholds)):
             t = thresholds[i]/1000.0
-            aligned_notes[i] += len([i for i in error if abs(i) < t])
-            total_notes[i] += len(error)
+            num_aligned = len([i for i in error if abs(i) < t])
             
-        
+            aligned_notes[i] += num_aligned
+            total_notes[i] += len(error)
+            file_ar[i] = num_aligned/len(error)
+         
+        #adding file wise alignment rate metrics to the global one
+        to_append = np.stack([file_ar, thresholds, [file]*len(aligned_notes)], axis=1)
+        temp_df = pd.DataFrame(data=to_append, columns = ar_local_df.columns)
+        ar_local_df = ar_local_df.append(temp_df, ignore_index=True)
+            
         zipped_error = np.array(list(zip(ch_alignment[:, 0], error)))
         np.savetxt(os.path.join(metrics_basepath, file + '.txt'), zipped_error, fmt='%f\t', header='score\t\tperformance')
         
@@ -140,9 +169,13 @@ def calculate_bulk_metrics(candidatedir, gtdir, scoredir, perfdir):
     alignment_rate = (aligned_notes/total_notes) * 100
     
     #Alignment Rate by Threshold
-    ar_df = pd.DataFrame(np.stack([thresholds, alignment_rate], axis=1), columns=['threshold', 'alignment_rate'])
-    ar_df['algo'] = [algo] * len(thresholds)
-    ar_df.to_csv(threshold_file, index=False)
+    ar_global_df = pd.DataFrame(np.stack([thresholds, alignment_rate], axis=1), columns=['threshold', 'alignment_rate'])
+    ar_global_df['algo'] = [algo] * len(thresholds)
+    ar_global_df.to_csv(global_threshold_file, index=False)
+    
+    #adding algo to ar_local_info, and saving
+    ar_local_df['algo'] = [algo] * len(ar_local_df)
+    ar_local_df.to_csv(local_threshold_file, index=False)
     
     return
 
