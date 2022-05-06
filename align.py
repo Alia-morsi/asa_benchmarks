@@ -43,7 +43,15 @@ if __name__ == "__main__":
 
     start_time = time.time()
     
+    #load the sorted performances in the file of algo
+    
+    #get the last one 
+    
     performances = sorted([f[:-len('.midi')] for f in os.listdir(perfdir) if f.endswith('.midi')])
+    
+    #find the index of that last one
+    
+    processing_start = 0
     
     if algo == 'ground-beat-interpol':
         # this expects that the some preprocessing is done on the maestro data to be considered
@@ -68,7 +76,8 @@ if __name__ == "__main__":
         print('Computing {} alignments'.format(algo))
         total = 0 #tracker for the total time
         
-        for perf in performances:
+        for i in range(0, len(performances)):
+            perf = performances[i]
             print('  ', perf, end=' ')
             kwargs = {} #useful for passing extra variables
             
@@ -80,6 +89,7 @@ if __name__ == "__main__":
                 kwargs['score_beat_annotation'] = os.path.join(scoredir, util.map_score(perf) + '.txt')
                 kwargs['perf_beat_annotation'] = os.path.join(perfdir, util.map_score(perf) + '.txt') 
             #I think this shouldn't cause a problem because so far the base for the performances is the same as that of the files.
+            
 
             if os.path.isfile(os.path.join(outdir, perf + '.txt')):
                 continue

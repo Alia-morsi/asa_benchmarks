@@ -110,6 +110,9 @@ def sonify_interpolated_gt():
         print('Writing {} \n'.format(outfile))
         sf.write(outfile, stereo_sonification.T, 44100)
     return
+    
+def sonify_results():
+    return
 
 
 if __name__ == "__main__":
