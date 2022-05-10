@@ -1,0 +1,37 @@
+Run these commands from alignment_eval/ (the parent folder of this directory)
+
+mkdir tmp-context
+rsync -av --progress --exclude data --exclude eval --exclude tmp-context --exclude docker --exclude align --exclude .git . tmp-context/alignment_eval 
+cp -R docker/* tmp-context/
+
+
+now, tmp-context should be:
+tmp-context/
+	alignment_eval
+	Dockerfile
+	requirements.txt
+	README
+	environment.yml
+	vamp
+	
+Then, run docker build from inside tmp-context
+If that works successfully, delete tmp-context, and continue configuring the mount points to share files with your local machine.
+
+1. Rename Docker image
+sudo docker tag <image_num> <image_name>
+
+2. We want the generated results to persist outside the docker image, and we want to use data from outside the docker image (otherwise the image size will explode). So, we will bind mount two folders to docker /mnt, then we will symlink them from inside the alignment_eval repository so that all the code works naturally 
+
+sudo docker run -d -it --name <container_name> --mount type=bind,source=/home/alia/Documents/projects/A2S/alignment-eval/data,target=/mnt/data --mount type=bind,source=/home/alia/Documents/projects/A2S/alignment-eval/eval/,target=/mnt/eval --mount type=bind,source=/home/alia/Documents/projects/A2S/alignment-eval/align,target=/mnt/align <image_name>
+
+3. Run the bash of this newly created container to see if the mount points have been created correctly.
+sudo docker exec -it <container_name> /bin/bash
+ls /mnt
+
+4. Create the symlinks from within the docker bash
+ln -s /mnt/data /root/alignment_eval/data
+ln -s /mnt/eval /root/alignment_eval/eval
+ln -s /mnt/align /root/alignment_eval/align
+
+5. Do a small persistence test to check if the data created will stay on the local machine post the lifetime of the docker container.
+
