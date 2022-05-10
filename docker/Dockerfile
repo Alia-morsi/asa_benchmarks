@@ -22,11 +22,22 @@ RUN apt-get -y update
 RUN apt-get -y upgrade
 RUN apt-get install -y fluidsynth
 RUN apt-get update && apt-get upgrade -y && apt-get install -y && apt-get -y install apt-utils gcc libpq-dev libsndfile-dev
-COPY vamp/* ~/vamp/
+RUN apt-get install vim
 RUN pip install --upgrade pip
 COPY requirements.txt requirements.txt
 RUN pip install --default-timeout=10000 -r requirements.txt
 RUN pip install torch torchvision
+RUN pip install music21
+RUN pip install -U llvmlite==0.32.1
+RUN pip install ipython
+RUN pip install madmom
+RUN mkdir -p /root/vamp
+RUN mkdir -p /root/alignment_eval
+COPY vamp/* /root/vamp/
 RUN pip install vamp
+RUN pip install numba==0.53
+COPY alignment_eval/ /root/alignment_eval/
+
+
 
 #CMD echo 'hello world' 
