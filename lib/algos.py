@@ -93,7 +93,7 @@ def align_spectra(score_midi, perf, fs=44100, stride=512, n_fft=4096):
     return np.array([(s,t) for s,t in dict(reversed(wp)).items()])*(stride/fs)
 
 
-
+def align_hpcp(score_midi, perf, fs=44100, stride=2048, n_fft=4096):
     score_synth = pretty_midi.PrettyMIDI(score_midi).fluidsynth(fs=fs)
     perf,_ = librosa.load(perf + '.wav', sr=fs)
     score_hpcpgram = hpcpgram(score_synth, sampleRate=fs, hopSize=2048, frameSize=4096)
