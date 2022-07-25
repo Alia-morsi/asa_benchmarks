@@ -1,43 +1,74 @@
-# music-alignment
+## This is the accompanying code for the paper: Breaking the Glass Ceiling
 
-Experiments and dataset for the paper [Rethinking Evaluation Methodology for Audio-to-Score Alignment](https://arxiv.org/abs/2009.14374).
+The purpose of this is to create a foundation for a system which can be used for Audio to Score alignment benchmarking. At its current state it is by no means complete, but it is a call for interested researchers to gather and discuss what should be done. 
 
-## Building the Dataset
+Relevant datasets for Audio to Score alignment
 
-To get started, first clone a copy of the Bach WTC scores:
+Saarland		Granularity  Stength 
+RWC alignment subset
+Phoenix
+Bach10
+ASAP (vanilla)
+Interpolated ASAP
+
+Granularity Strength Ideas
+beat level
+note level
+
+The paper discusses the use of just one of such datasets (the ASAP dataset), for Audio to Score alignment.  
+
+
+## Extending the codebase
+To add a new dataset
+
+To add a new algorithm
+
+To include training as part of this codebase
+
+- if you are to add another dtw implementation, make sure that you transpose the audio representations to the format expected by the distance measure used.
+- On the conversion from and to the actual times,
+
+## Running with Docker
+To run with Docker, please see docker/README for instructions on how to build a docker image from the resources in this repository, and how to mount folders on your local machine to the docker container (to avoid the image getting extra large, and so that the data persists after calculation)
+
+On completing the said instructions, you would have a docker container with a copy of alignment-eval, in the root directory, where the data, align, and eval folders are symlinks to their corresponding folders in /mnt of the container (which are in turn folders in your local alignment-eval). Hence, you can run everything in the docker container, and the data would persist in their local locations in alignment_eval.
+ 
+## Getting the ASAP dataset
+
+However, first the ASAP files need to be restructured a bit.
 
 ```
-https://github.com/humdrum-tools/bach-wtc
+from extract import restructure_asap_files
+
+restructure_asap_files('/Users/aliamorsi/Desktop/phD/a2s_with_dtw_survey/pitchclass_mctc/data/asap-preludes', 'metadata.csv')
 ```
 
-You'll also need a copy of the MAESTRO (v2.0) dataset:
+## Interpolating Ground Truths from ASAP
+
+We have added the ability to both generate ground truth annotations and to sonify them + play them alongside the actual performance wav. 
+
+Then, run the following to create the ground truth interpolations
 
 ```
-https://magenta.tensorflow.org/datasets/maestro#v200
+python3 align.py ground-beat-interpol data/score data/perf 0
 ```
 
-After downloading the scores and MAESTRO dataset, you can extract the aligmnent dataset
-by calling the `extract` script from the root of this repository:
+To sonify them, run:
 
 ```
-python3 extract.py {path-to-scores}/bach-wtc/ {path-to-maestro}/maestro-v2.0.0
+from extract import sonify_interpolated_gt
+
+sonify_interpolated_gt()
 ```
 
-The script will extract pairs of KernScores and MAESTRO performances to the data/ subfolder.
+and by default, the sonified files will be created in eval/sonic.
+These files are stereo, with the sonified performance_aligned_gt on one channel and the performance wav on the other.
 
-To generate the ground-truth alignments, run the following:
-
-```
-python3 align.py ground data/score data/perf N
-```
-
-The first argument specifes the alignment algorithm (written to an output directory of the same name).
-The fourth argument 'N' specifies the number of parallel processes to run (N = 0 runs non-parallel)
+Open them with audacity, split to have each channel on a separate track, and play with the volume so that they sound even. If playing them together does not seem odd, then there is no problem with the ground truth.
 
 ## Computing Alignments
 
-You can compute audio-to-score alignments by specifying a particular alignment algorithm:
-
+To compute an alignment with a given dataset, 
 ```
 python3 align.py {spectra,chroma,cqt} data/score data/perf N
 ```
@@ -47,6 +78,8 @@ plaintext files with two columns: the first column indicates time in the score, 
 column indicates time in the performance.
 
 To evaluate the results of a particular alignment algorithm:
+
+(The evaluate and the generation of result files should be one step..)
 
 ```
 python3 eval.py {spectra,chroma,cqt,ctc-chroma} data/score data/perf
@@ -68,39 +101,9 @@ from eval import metadata_for_qa
 metadata_for_qa('data/score', 'data/perf', 'align/ground-beat-interpol')
 ```
 
-## Interpolating Ground Truths from ASAP
-
-Although checking the reliability of such interpolated annotations is something still in the works, we have added the ability to both generate ground truth annotations and to sonify them + play them alongside the actual performance wav. 
-
-However, first the ASAP files need to be restructured a bit.
-
-```
-from extract import restructure_asap_files
-
-restructure_asap_files('/Users/aliamorsi/Desktop/phD/a2s_with_dtw_survey/pitchclass_mctc/data/asap-preludes', 'metadata.csv')
-```
-
-Then, run the following to create the ground truth interpolations
-
-```
-python3 align.py ground-beat-interpol data/score data/perf 0
-```
-
-To sonify them, run:
-
-```
-from extract import sonify_interpolated_gt
-
-sonify_interpolated_gt()
-```
-
-and by default, the sonified files will be created in eval/sonic.
-These files are stereo, with the sonified performance_aligned_gt on one channel and the performance wav on the other.
-
-Open them with audacity, split to have each channel on a separate track, and play with the volume so that they sound even. If playing them together does not seem odd, then there is no problem with the ground truth.
-
 ## Visualizations 
 
+(There is something here which could be related to the evaluation of Audio to Score alignment as per the Eita Nakamura paper)
 To understand the behavior of the ground-truth alignments, we can visually compare the piano-roll
 performance (subplot 1) captured by the Yamaha Disklavier to the performance-aligned score created
 by warping the score according to the ground-truth alignment (subplot 2). In the comparison plot
@@ -131,12 +134,5 @@ To reference this work, please cite
   year      = {2020},
 }
 ```
-
-Note to Dev: 
-- if you are to add another dtw implementation, make sure that you transpose the audio representations to the format expected by the distance measure used. 
-- On the conversion from and to the actual times, 
-
-Todos: 
-- add the possibility to only align a subset of the performances in the data folder.
 
 
