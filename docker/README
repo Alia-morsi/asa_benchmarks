@@ -35,3 +35,19 @@ ln -s /mnt/align /root/alignment_eval/align
 
 5. Do a small persistence test to check if the data created will stay on the local machine post the lifetime of the docker container.
 
+6. To run jupyter notebooks from docker, run the following from docker bash:
+pip3 install jupyter
+
+jupyter notebook --allow-root --ip 0.0.0.0 
+
+Then, to open it on a browser in the host machine, find out the address of the docker container by checking the output of 
+
+docker inspect <container_name>
+
+and find the item with key IPAddress
+
+Finally, from the browser, replace the localhost fragment of the jupyter server address to be the IPAddress of the docker machine. For example:
+
+172.17.0.2:8888/?token=729b1e4721a47aaccef871bc06f47b10f96a80d78a80346f
+
+assuming that 172.17.0.02 is the ip address
