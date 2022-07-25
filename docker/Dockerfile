@@ -22,7 +22,7 @@ RUN apt-get -y update
 RUN apt-get -y upgrade
 RUN apt-get install -y fluidsynth
 RUN apt-get update && apt-get upgrade -y && apt-get install -y && apt-get -y install apt-utils gcc libpq-dev libsndfile-dev
-RUN apt-get install vim
+RUN apt-get install -y vim
 RUN pip install --upgrade pip
 COPY requirements.txt requirements.txt
 RUN pip install --default-timeout=10000 -r requirements.txt
