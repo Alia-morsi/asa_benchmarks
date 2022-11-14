@@ -1,8 +1,8 @@
-## This is the accompanying code for the paper: Breaking the Glass Ceiling
+## This is the accompanying code for the paper: Bottlenecks and Solutions for Audio to Score Alignment Research
 
 The purpose of this is to create a foundation for a system which can be used for Audio to Score alignment benchmarking. At its current state it is by no means complete, but it is a call for interested researchers to gather and discuss what should be done. 
 
-Relevant datasets for Audio to Score alignment
+TO COMPLETE: Relevant datasets for Audio to Score alignment
 
 Saarland		Granularity  Stength 
 RWC alignment subset
@@ -103,36 +103,21 @@ metadata_for_qa('data/score', 'data/perf', 'align/ground-beat-interpol')
 
 ## Visualizations 
 
-(There is something here which could be related to the evaluation of Audio to Score alignment as per the Eita Nakamura paper)
-To understand the behavior of the ground-truth alignments, we can visually compare the piano-roll
-performance (subplot 1) captured by the Yamaha Disklavier to the performance-aligned score created
-by warping the score according to the ground-truth alignment (subplot 2). In the comparison plot
-(subplot 3) we use red to identify notes that are indicated by the performance-aligned score but
-not performed and yellow to identify notes that are performed but not indicated by the
-performance-aligned score. This example visualizes the beginning of a performance of the Bach's
-Prelude and Fugue in G-sharp minor (BWV 863).
+TODO: Add reference to the musicxml visualizations, and keep the visualizations by Thickstun + relate them to the missing notes/extra notes evaluation by Nakamura. 
 
-![](assets/ground_truth.png)
-
-We can also use these visualizations to compare the results of an candidate alignment algorithm to
-the ground-truth alignment. In each case, red is used to identify notes that are indicated by the
-candidate alignment algorithm, but not by the ground-truth alignment, and yellow is used to
-identify notes that are indicated by the ground-truth alignment, but not by the candidate
-alignment.
-
-![](assets/candidates.png)
 
 ## References
 
 To reference this work, please cite
-
 ```bib
-@article{thickstun2020rethinking,
-  author    = {John Thickstun and Jennifer Brennan and Harsh Verma},
-  title     = {Rethinking Evaluation Methodology for Audio-to-Score Alignment},
-  journal   = {arXiv preprint arXiv:2009.14374},
-  year      = {2020},
+@article{morsi_serra_bottlenecks, 
+author = {Alia Morsi and Xavier Serra}, 
+title = {Bottlenecks and Solutions for Audio to Score Alignment Research}, 
+journal = {Proceedings of the 23rd International Society for Music Information Conference (ISMIR)},
+year = {2022}
 }
 ```
+
+Although it has diverged, this repo started out as a fork of https://github.com/jthickstun/alignment-eval
 
 
