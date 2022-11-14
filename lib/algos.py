@@ -12,22 +12,8 @@ import soundfile as sf
 from essentia.standard import HPCP
 from essentia.pytools.spectral import hpcpgram
 
-import pdb
-
-#import pyximport
-#pyximport.install(reload_support=True, language_level=sys.version_info[0],
-#                  setup_args={"include_dirs":np.get_include()})
-
-#import lib.gtalign as gtalign
 
 def interpolate_ground_truth(score_midi, perf, score_beat_annotation='', perf_beat_annotation='', fs=44100, stride=512, lmbda=0.1):
-        # A good way to evaluate this interpolated ground truth is to see whether the interpolated onsets would
-    # compare them with the performance onsets. This will only be applicable with the ASAP scores that are
-    # asserted to have the same number of score notes and performance notes. Otherwise the same concept can be done but we'll have to think of a trick. This ground truth evaluation is already done at a later step so we won't repeat it in this function.
-
-    # build the interpolation function with x being the score time and y being the performance time
-    #generate the interpolation for all the necessary note onsets? 
-    
     score_beat_annot_df =  pd.read_csv(score_beat_annotation, delimiter='\t', header=None)
     perf_beat_annot_df =  pd.read_csv(perf_beat_annotation, delimiter='\t', header=None)
     
@@ -45,25 +31,6 @@ def interpolate_ground_truth(score_midi, perf, score_beat_annotation='', perf_be
     
     #not sure why we have this statement, but it could be for the interpolation success
     return np.insert(interpolated_gt_annotation, 0, (score_notes[0][1], perf_start), axis=0)
-#    return np.insert(interpolated_gt_annotation, 0, (score_notes[0][1], perf_start), axis=0)
-    
-
-def align_ground_truth(score_midi, perf, fs=44100, stride=512, lmbda=0.1):
-    score_events,score_start,score_end = midi.load_midi_events(score_midi)
-    perf_events,perf_start,perf_end = midi.load_midi_events(perf + '.midi')
-
-    score_rep = score_events.astype(np.float32)
-    perf_rep = util.pianoroll(perf_events).astype(np.float32)
-
-    ds = stride/fs
-    L = gtalign.align(score_rep,perf_rep,ds,lmbda)
-    path,_ = gtalign.traceback(score_rep,perf_rep,L,ds,lmbda)
-
-    index_alignment = [dict(path)[i] for i in range(len(score_events))]
-    score_timing = score_start + np.cumsum(score_events[:,-1])
-    perf_timing = [perf_start + k*(stride/fs) for k in index_alignment]
-    alignment = np.array(list(zip(score_timing,perf_timing)))
-    return np.insert(alignment, 0, (score_start,perf_start), axis=0)
 
 def align_chroma(score_midi, perf, fs=44100, stride=512, n_fft=4096):
     score_synth = pretty_midi.PrettyMIDI(score_midi).fluidsynth(fs=fs)
