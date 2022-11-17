@@ -1,13 +1,13 @@
-Run these commands from alignment_eval/ (the parent folder of this directory)
+Run these commands from asa_benchmarks/ (the parent folder of this directory)
 
 mkdir tmp-context
-rsync -av --progress --exclude data --exclude eval --exclude tmp-context --exclude docker --exclude align --exclude .git . tmp-context/alignment_eval 
+rsync -av --progress --exclude data --exclude eval --exclude tmp-context --exclude docker --exclude align --exclude .git . tmp-context/asa_benchmarks 
 cp -R docker/* tmp-context/
 
 
 now, tmp-context should be:
 tmp-context/
-	alignment_eval
+	asa_benchmarks
 	Dockerfile
 	requirements.txt
 	README
@@ -29,9 +29,9 @@ sudo docker exec -it <container_name> /bin/bash
 ls /mnt
 
 4. Create the symlinks from within the docker bash
-ln -s /mnt/data /root/alignment_eval/data
-ln -s /mnt/eval /root/alignment_eval/eval
-ln -s /mnt/align /root/alignment_eval/align
+ln -s /mnt/data /root/asa_benchmarks/data
+ln -s /mnt/eval /root/asa_benchmarks/eval
+ln -s /mnt/align /root/asa_benchmarks/align
 
 5. Do a small persistence test to check if the data created will stay on the local machine post the lifetime of the docker container.
 
