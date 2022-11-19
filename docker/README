@@ -1,7 +1,10 @@
+Download the nnls vamp plugin: 
+please go to http://www.isophonics.net/nnls-chroma and download the linux binary folder. extract and rename to vamp, and put the vamp folder (which has the files CITATION, COPYING, nnls-chroma.cat, nnls-chroma.n3, nnls-chroma.so, and README) in tmp-context.
+
 Run these commands from asa_benchmarks/ (the parent folder of this directory)
 
 mkdir tmp-context
-rsync -av --progress --exclude data --exclude eval --exclude tmp-context --exclude docker --exclude align --exclude .git . tmp-context/asa_benchmarks 
+rsync -av --progress --exclude README --exclude data --exclude eval --exclude tmp-context --exclude docker --exclude align --exclude .git . tmp-context/asa_benchmarks 
 cp -R docker/* tmp-context/
 
 
@@ -13,16 +16,16 @@ tmp-context/
 	README
 	environment.yml
 	vamp
-	
-Then, run docker build from inside tmp-context
+
+Then, run 'docker build .' from inside tmp-context
 If that works successfully, delete tmp-context, and continue configuring the mount points to share files with your local machine.
 
 1. Rename Docker image
 sudo docker tag <image_num> <image_name>
 
-2. We want the generated results to persist outside the docker image, and we want to use data from outside the docker image (otherwise the image size will explode). So, we will bind mount two folders to docker /mnt, then we will symlink them from inside the alignment_eval repository so that all the code works naturally 
+2. We want the generated results to persist outside the docker image, and we want to use data from outside the docker image (otherwise the image size will explode). So, we will bind mount two folders to docker /mnt, asa_benchmarks/data and asa_benchmarks/eval, then we will symlink them from inside the asa_benchmarks repository so that all the code works naturally. 
 
-sudo docker run -d -it --name <container_name> --mount type=bind,source=<absolute_path>/alignment-eval/data,target=/mnt/data --mount type=bind,source=<absolute_path>/alignment-eval/eval/,target=/mnt/eval --mount type=bind,source=<absolute_path>/alignment-eval/align,target=/mnt/align <image_name>
+sudo docker run -d -it --name <container_name> --mount type=bind,source=<absolute_path>/asa_benchmarks/data,target=/mnt/data --mount type=bind,source=<absolute_path>/asa_benchmarks/eval/,target=/mnt/eval --mount type=bind,source=<absolute_path>/asa_benchmarks/align,target=/mnt/align <image_name>
 
 3. Run the bash of this newly created container to see if the mount points have been created correctly.
 sudo docker exec -it <container_name> /bin/bash
