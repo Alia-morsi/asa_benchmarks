@@ -36,7 +36,7 @@ RUN mkdir -p /root/alignment_eval
 COPY vamp/* /root/vamp/
 RUN pip install vamp
 RUN pip install numba==0.53
-COPY alignment_eval/ /root/alignment_eval/
+COPY asa_benchmarks/ /root/asa_benchmarks/
 
 
 

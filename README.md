@@ -1,7 +1,13 @@
 ## This is the accompanying code for the paper: Bottlenecks and Solutions for Audio to Score Alignment Research
 
-The purpose of this is to create a foundation for a system which can be used for Audio to Score alignment benchmarking. At its current state it is by no means complete, but it is a call for interested researchers to gather and discuss what should be done. 
+It is a repository that allows the easy application of several DTW variants for audio to score alignment on an adapted version of the asap dataset, as explained in the publication. 
+ 
+The purpose of this is to create a foundation for a system which can be used for Audio to Score alignment benchmarking. At its current state it is by no means complete, but it is a call for interested researchers to gather and discuss what should be done. For this to be a framework for benchmarking, we would need:
+1) to extend the datasets used
+2) to include more audio to score alignment implementations, including HMM based ones and others.
+3) to expand the evaluation metrics, to cover a variety of scenarios, as argued in the initial publication.
 
+Examples of relevant datasets: 
 TO COMPLETE: Relevant datasets for Audio to Score alignment
 
 Saarland		Granularity  Stength 
@@ -18,6 +24,11 @@ note level
 The paper discusses the use of just one of such datasets (the ASAP dataset), for Audio to Score alignment.  
 
 
+## Setting up
+Most of the requirements of this repository would be included in the environment.yml of the docker subdirectory. However, there are some things that (for now) need to be installed manually.
+
+https://github.com/christofw/pitchclass_mctc (this codebase is on commit 04b4a96)
+
 ## Extending the codebase
 To add a new dataset
 
@@ -31,7 +42,7 @@ To include training as part of this codebase
 ## Running with Docker
 To run with Docker, please see docker/README for instructions on how to build a docker image from the resources in this repository, and how to mount folders on your local machine to the docker container (to avoid the image getting extra large, and so that the data persists after calculation)
 
-On completing the said instructions, you would have a docker container with a copy of alignment-eval, in the root directory, where the data, align, and eval folders are symlinks to their corresponding folders in /mnt of the container (which are in turn folders in your local alignment-eval). Hence, you can run everything in the docker container, and the data would persist in their local locations in alignment_eval.
+On completing the said instructions, you would have a docker container with a copy of asa_benchmarks, in the root directory, where the data, align, and eval folders are symlinks to their corresponding folders in /mnt of the container (which are in turn folders in your local asa_benchmarks). Hence, you can run everything in the docker container, and the data would persist in their local locations in asa_benchmarks.
  
 ## Getting the ASAP dataset
 

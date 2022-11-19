@@ -33,10 +33,6 @@ def match_onsets(score_notes, perf_notes, gt_alignment, thres=.100):
             
     return matched_onsets
 
-def filter_performances():
-    #function to filter the performances based on performance characteristics. Hope to find something in maestro or asap metadata files
-    return
-
 #Thresholds and colors must be parallel with length greater than 1
 #Thresholds must be sorted.
 def color_chooser(error_val, thresholds = [], colors = []):
@@ -61,12 +57,6 @@ def color_chooser2(error_val, upper_bound):
     
     return m21.graph.utilities.getColor(rgb_color)
     
-
-#expects 4 thresholds.
-#def prepare_eval_score(scoredir, evaldir, thresholds, colors, color_thresholds=color_chooser):
-    # using the results of evaluation, returns the musicxml (or midi) score with color annotations in parts with bad accuracy. 
-    #for now, only midi will be used for ease.
-
 def prepare_eval_score(scoredir, evaldir, error_upper_bound, color_thresholds=color_chooser2):
     for file in sorted([f[:-len('.midi')] for f in os.listdir(scoredir) if f.endswith('.midi')]):
         m21_score = m21.converter.parse(os.path.join(scoredir, '{}.midi'.format(file)))
