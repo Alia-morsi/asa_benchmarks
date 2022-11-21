@@ -32,12 +32,11 @@ RUN pip install -U llvmlite==0.32.1
 RUN pip install ipython
 RUN pip install madmom
 RUN mkdir -p /root/vamp
-RUN mkdir -p /root/alignment_eval
+RUN mkdir -p /root/asa_benchmarks
 COPY vamp/* /root/vamp/
 RUN pip install vamp
 RUN pip install numba==0.53
 COPY asa_benchmarks/ /root/asa_benchmarks/
-
 
 
 #CMD echo 'hello world' 
