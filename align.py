@@ -32,19 +32,31 @@ data_adapt_functions = {
     }
 
 datasets = [
-    'asap', 'asap-interpolated', 'rwc_adapted'
+    'asap-interpolated', 'rwc_adapted'
 ]
 
-if __name__ == "__main__":        
-    algo = sys.argv[1]
-    dataset = sys.argv[2]
-    scoredir = sys.argv[3]
-    perfdir = sys.argv[4]
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Towards ASA Benchmarks')
+
+    parser.add_argument('--data', action='store_true', help='to alternate between alignment mode and dataprep mode. when set, mode is to dataprep')
+
+    parser.add_argument('action', type=str, help='When in alignment mode, set to one of: spectra, chroma, cqt, ctc-chroma, hpcpgram, nnls, dce.\nWhen in dataprep mode, set to ground_beat_interpol')
+
+    parser.add_argument('dataset', type=str, help='dataset name, which should be the same as the folder name. Note that the files must be formatted as expected (See README)')
+
+    args = parser.parse_args()
+
+    data_mode = args.data
+    action = args.action
+    dataset = args.dataset
+
+    scoredir = os.path.join('data', dataset, 'score')
+    perfdir = os.path.join('data', dataset, 'perf')
 
     #reset vs continue should be an argument, to determine if we should continue or not
     #also skip list should be an argument
         
-    outdir = os.path.join('align', dataset, algo)
+    outdir = os.path.join('align', dataset, action)
     if not os.path.exists(outdir):
         try:
             os.makedirs(outdir)
@@ -55,7 +67,7 @@ if __name__ == "__main__":
     start_time = time.time()
     performances = sorted([f[:-len('.midi')] for f in os.listdir(perfdir) if f.endswith('.midi')])
 
-    if continue:
+    #if continue:
         #load the sorted performances in the file of algo
         #get the last one  
         #find the index of that last one
@@ -63,26 +75,14 @@ if __name__ == "__main__":
     
     processing_start = 0
     
-    #change this to: if data adaptation
-    if algo == 'ground-beat-interpol':
+    if action == 'ground-beat-interpol':
         score_beat_annotations = sorted([f[:-len('.txt')] for f in os.listdir(scoredir) if f.endswith('.midi')])
         performance_beat_annotations = sorted([f[:-len('.txt')] for f in os.listdir(perfdir) if f.endswith('.midi')])
     
-    alignment_algo = getattr(algos, algo_functions[algo])
-    
-'''    if parallel > 0:
-        print('Computing {} alignments (parallel)'.format(algo))
-        args = []
-        for i in range(0, len(performances)):
-            kwargs = {}
-            if algo == 'ground-beat-interpol':
-                kwargs['score_beat_annotation'] = score_beat_annotations[i]
-                kwargs['performance_beat_annotation'] = performance_beat_annotations[i]
-                args.append((alignment_algo, performances[i], perfdir, scoredir, outdir, kwargs))
-        #args = [(alignment_algo, perf, perfdir, scoredir, outdir, kwargs) for perf in performances]
-        with multiprocessing.Pool(parallel) as p: p.starmap(align_and_save, args)
-'''
-    print('Computing {} alignments'.format(algo))
+    #this should have a path for if 'not' data
+    alignment_algo = getattr(algos, algo_functions[action])
+
+    print('Computing {} alignments'.format(action))
     total = 0 #tracker for the total time
         
     for i in range(0, len(performances)):
@@ -94,14 +94,17 @@ if __name__ == "__main__":
         perf_path = os.path.join(perfdir, perf)
         score = os.path.join(scoredir,util.map_score(perf) + '.midi')
             
-        if algo == 'ground-beat-interpol':
+        #wtf is this code.. I think I wanted to keep the same flow at all costs. refactor to have separate paths
+        # for the interpolation and the actual alignment.
+
+        if action == 'ground-beat-interpol':
             kwargs['score_beat_annotation'] = os.path.join(scoredir, util.map_score(perf) + '.txt')
             kwargs['perf_beat_annotation'] = os.path.join(perfdir, util.map_score(perf) + '.txt') 
             #I think this shouldn't cause a problem because so far the base for the performances is the same as that of the files.
             
         if os.path.isfile(os.path.join(outdir, perf + '.txt')):
             continue
-                
+        
         alignment = alignment_algo(score, perf_path, **kwargs)
             
         if len(alignment) == 0:
