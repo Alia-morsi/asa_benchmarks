@@ -61,47 +61,4 @@ def sonify_interpolated_gt():
         sf.write(outfile, stereo_sonification.T, 44100)
     return
     
-if __name__ == "__main__":
-    os.makedirs('data/perf',exist_ok=True)
-    os.makedirs('data/score',exist_ok=True)
-
-    oneup = 0
-    score_root = os.path.join(sys.argv[1],'kern')
-    root = sys.argv[2]
-    with open(os.path.join(root,'maestro-v2.0.0.csv')) as f:
-        index = csv.reader(f)
-
-        wtc = re.compile('Prelude and F')
-        bwv = re.compile('BWV (\d*)')
-        for row in index:
-            if row[0] != 'Johann Sebastian Bach': continue # not bach
-            if not wtc.search(row[1]): continue # not wtc
-            if row[4] in exclude: continue # something wrong with these
-        
-            identifier = bwv.search(row[1])
-            if identifier:
-                outfile = 'bwv{}'.format(identifier.group(1))
-            else:
-                try:
-                    outfile = 'bwv{}'.format(hardcoded_bwvs[row[1]])
-                except KeyError:
-                    print('MISSING:', row[1])
-
-            notes, ticks_per_beat = midilib.load_midi(os.path.join(root,row[4]))
-            fs, data = wavfile.read(os.path.join(root,row[5]))
-
-            if row[4] in partial: #special cases
-                basename = 'data/perf/{:03d}_{}{}'.format(oneup, outfile, partial[row[4]])
-                extract(basename, score_root, data, notes, ticks_per_beat)
-                oneup += 1
-            else:
-                splitpoint = midilib.split(notes)
-                pnotes = [n for n in notes if n[1] < splitpoint]
-                basename = 'data/perf/{:03d}_{}{}'.format(oneup, outfile, 'p')
-                extract(basename, score_root, data[:int(fs*splitpoint)], pnotes, ticks_per_beat)
-                oneup += 1
-                fnotes = [(n[0],n[1]-splitpoint,n[2]-splitpoint) for n in notes if n[1] >= splitpoint]
-                basename = 'data/perf/{:03d}_{}{}'.format(oneup, outfile, 'f')
-                extract(basename, score_root, data[int(fs*splitpoint):], fnotes, ticks_per_beat)
-                oneup += 1
 
