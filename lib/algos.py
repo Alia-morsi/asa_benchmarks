@@ -6,7 +6,7 @@ import lib.util as util
 import pandas as pd
 from lib.pitchclass_mctc.wrappers import PitchClassCTC
 import vamp
-import madmom
+#import madmom
 import soundfile as sf
 
 from essentia.standard import HPCP
