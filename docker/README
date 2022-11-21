@@ -1,6 +1,3 @@
-Download the nnls vamp plugin: 
-please go to http://www.isophonics.net/nnls-chroma and download the linux binary folder. extract and rename to vamp, and put the vamp folder (which has the files CITATION, COPYING, nnls-chroma.cat, nnls-chroma.n3, nnls-chroma.so, and README) in tmp-context.
-
 Run these commands from asa_benchmarks/ (the parent folder of this directory)
 
 mkdir tmp-context
