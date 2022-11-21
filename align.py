@@ -55,8 +55,13 @@ if __name__ == "__main__":
 
     #reset vs continue should be an argument, to determine if we should continue or not
     #also skip list should be an argument
-        
-    outdir = os.path.join('align', dataset, action)
+    
+    #this just assumes that the restructured dataset and the interpolated one will be in the same place.
+    if data_mode:
+        outdir = os.path.join('data', '{}_{}'.format(dataset, 'interpolated')
+    else:
+        outdir = os.path.join('align', dataset, action)
+
     if not os.path.exists(outdir):
         try:
             os.makedirs(outdir)
